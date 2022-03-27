@@ -184,7 +184,7 @@ LocKer <- function(X, Y, family, X_obser_num, Y_obser_num, X_obser, Y_obser, tim
 
 }
 
-EBIC <- function(X_tilde, Y, family, gamma_est, W, XWX, B_der, roupen_para, n_real,
+EBIC <- function(X_tilde, Y, family, gamma_est, W, XWX, B_der, roupen_para, n_real, nLM,
                  Y_obser_num, linkfun){
 
   n <- length(Y)
@@ -231,7 +231,7 @@ EBIC <- function(X_tilde, Y, family, gamma_est, W, XWX, B_der, roupen_para, n_re
   id <- which(gamma_est != 0)
   XWX_sub <- XWX[id, id]
   B_der_sub <- B_der[id, id]
-  df <- psych::tr(solve(XWX_sub + n * roupen_para * B_der_sub) %*% XWX_sub)
+  df <- psych::tr(solve(XWX_sub + nLM * roupen_para * B_der_sub) %*% XWX_sub)
   nonzero_num <- df
 
   EBIC_score <- log(sum(SSE)) + nonzero_num * log(n_real)/n_real +
@@ -320,7 +320,7 @@ LocKer_ind <- function(X, Y, family, X_obser_num, Y_obser_num, X_obser, Y_obser,
           XWZ <- XWZ + XW[[i]][[j]] %*% Z[[i]][[j]]
         }
       }
-      gamma_ini <- solve(XWX + n * roupen_para * V_der) %*% XWZ # LSE as initial estimate
+      gamma_ini <- solve(XWX + nLM * roupen_para * V_der) %*% XWZ # LSE as initial estimate
 
       gamma_est <- list()
       gamma_est[[1]] <- gamma_ini
@@ -368,8 +368,8 @@ LocKer_ind <- function(X, Y, family, X_obser_num, Y_obser_num, X_obser, Y_obser,
                         lambda, absTol = absTol)
         comp_id <- c(1:p, U_sub$id + p)
         U_res <- as.matrix(Matrix::bdiag(diag(0, p), U_sub$U[U_sub$id, U_sub$id]))
-        XW_wX_inv <- tryCatch(solve(XW_wX[comp_id, comp_id] + n * roupen_para * V_der[comp_id, comp_id] +
-                                      2 * n * U_res),
+        XW_wX_inv <- tryCatch(solve(XW_wX[comp_id, comp_id] + nLM * roupen_para * V_der[comp_id, comp_id] +
+                                      nLM * U_res),
                               error = function(err){return(Inf)})
         if(is.infinite(XW_wX_inv[1])){
           print(paste("smooth", roupen_para, ", sparse", lambda, "break"))
@@ -392,7 +392,8 @@ LocKer_ind <- function(X, Y, family, X_obser_num, Y_obser_num, X_obser, Y_obser,
         EBIC_score[ii, jj] <- Inf
       }else{
         EBIC_score[ii, jj] <- EBIC(X_tilde, Y, family, gamma_est = gamma_est[[iter]], W,
-                                   XW_wX, V_der, roupen_para, n_real, Y_obser_num, linkfun)
+                                   XW_wX, V_der, roupen_para, n_real, nLM, Y_obser_num,
+                                   linkfun)
       }
 
     }
